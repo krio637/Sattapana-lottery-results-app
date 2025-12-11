@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Advertisement - Sattapana Admin</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            max-width: 600px;
+            width: 100%;
+        }
+        .form-card {
+            background: #1a1a2e;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            border: 2px solid #e74c3c;
+        }
+        .form-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .form-header h1 {
+            color: #e74c3c;
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        .form-header p {
+            color: #ffd700;
+            font-size: 1.1em;
+        }
+        .form-group {
+            margin-bottom: 25px;
+        }
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: #ffd700;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        .form-control {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e74c3c;
+            border-radius: 8px;
+            font-size: 1em;
+            background: #0f0f1e;
+            color: white;
+            transition: all 0.3s;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: #ffd700;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+        }
+        textarea.form-control {
+            resize: vertical;
+            min-height: 100px;
+        }
+        .form-check-input {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+        }
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            color: white;
+        }
+        .current-image {
+            margin-top: 10px;
+            padding: 10px;
+            background: #0f0f1e;
+            border-radius: 8px;
+        }
+        .current-image img {
+            max-width: 100%;
+            max-height: 150px;
+            border-radius: 5px;
+        }
+        .current-image p {
+            color: #aaa;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 40px;
+        }
+        .btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
+            display: inline-block;
+            transition: all 0.3s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(231, 76, 60, 0.5);
+        }
+        .btn-secondary {
+            background: #2c3e50;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #34495e;
+        }
+        .helper-text {
+            color: #aaa;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="form-card">
+            <div class="form-header">
+                <h1>✏️ Edit Advertisement</h1>
+                <p>Update advertisement details</p>
+            </div>
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="{{ form.title.id_for_label }}">📝 Title:</label>
+                    {{ form.title }}
+                    <div class="helper-text">Enter the advertisement title</div>
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.image.id_for_label }}">🖼️ Image:</label>
+                    {{ form.image }}
+                    <div class="helper-text">Upload a new image (leave empty to keep current)</div>
+                    {% if ad.image %}
+                    <div class="current-image">
+                        <p>Current image:</p>
+                        <img src="{{ ad.image.url }}" alt="{{ ad.title }}">
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.text.id_for_label }}">📄 Text:</label>
+                    {{ form.text }}
+                    <div class="helper-text">Enter the advertisement description</div>
+                </div>
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        {{ form.is_active }}
+                        <span>✓ Active (Show on website)</span>
+                    </label>
+                </div>
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary">💾 Update Advertisement</button>
+                    <a href="{% url 'lottery:admin_dashboard' %}" class="btn btn-secondary">❌ Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

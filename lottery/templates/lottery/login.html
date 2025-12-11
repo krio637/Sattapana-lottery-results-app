@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - Sattapana</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .login-container {
+            max-width: 450px;
+            width: 100%;
+        }
+        .login-card {
+            background: #1a1a2e;
+            border-radius: 15px;
+            padding: 50px 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            border: 2px solid #e74c3c;
+        }
+        .login-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .logo {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+        .login-header h1 {
+            color: #e74c3c;
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        .login-header p {
+            color: #ffd700;
+        }
+        .form-group {
+            margin-bottom: 25px;
+        }
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: #ffd700;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e74c3c;
+            border-radius: 8px;
+            font-size: 1em;
+            background: #0f0f1e;
+            color: white;
+            transition: all 0.3s;
+        }
+        input:focus {
+            outline: none;
+            border-color: #ffd700;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+        }
+        .btn-login {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(231, 76, 60, 0.5);
+        }
+        .error-message {
+            background: #e74c3c;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .back-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .back-link a {
+            color: #ffd700;
+            text-decoration: none;
+        }
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="logo">🎰</div>
+                <h1>SATTAPANA</h1>
+                <p>Admin Panel Login</p>
+            </div>
+
+            {% if error %}
+            <div class="error-message">
+                {{ error }}
+            </div>
+            {% endif %}
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="username">👤 Username</label>
+                    <input type="text" id="username" name="username" required autofocus>
+                </div>
+                <div class="form-group">
+                    <label for="password">🔒 Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="btn-login">🔓 Login</button>
+            </form>
+
+            <div class="back-link">
+                <a href="{% url 'lottery:results' %}">← Back to Public Chart</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
