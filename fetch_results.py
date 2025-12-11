@@ -1,5 +1,5 @@
 """
-Fetch today's lottery results from satta-resultss.in
+Fetch today's lottery results from sattaking-result.in
 Run: python fetch_results.py
 """
 import os
@@ -14,10 +14,11 @@ django.setup()
 
 from lottery.models import LotteryResult
 
-# State mapping from website
+# State mapping
 STATE_MAPPING = {
     'DELHI BAZAR': 'Delhi Bazar',
     'SHRI GANESH': 'Shri Ganesh',
+    'DISAWAR': 'Disawar',
     'DISAWER': 'Disawar',
     'FARIDABAD': 'Faridabad',
     'GHAZIABAD': 'Ghaziabad',
@@ -30,8 +31,8 @@ MANUAL_STATES = ['Dwarka City', 'Ujjain King']
 
 
 def fetch_results():
-    """Fetch today's results from satta-resultss.in"""
-    url = "https://www.satta-resultss.in/index.php"
+    """Fetch today's results from sattaking-result.in"""
+    url = "https://sattaking-result.in/"
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
     today = datetime.date.today()
     
@@ -44,32 +45,39 @@ def fetch_results():
     try:
         response = requests.get(url, headers=headers, timeout=15)
         soup = BeautifulSoup(response.content, 'html.parser')
+        html_text = soup.get_text()
         
-        # Parse tables for results
-        for table in soup.find_all('table'):
-            for row in table.find_all('tr'):
-                for cell in row.find_all(['td', 'th']):
-                    text = cell.get_text(strip=True).upper()
-                    
-                    for key, state_name in STATE_MAPPING.items():
-                        if key in text:
-                            # Extract number from format: "STATE{XX}"
-                            match = re.search(r'\{(\d+)\s*\}', text)
-                            winning_number = match.group(1) if match else ''
-                            
-                            result, created = LotteryResult.objects.update_or_create(
-                                date=today,
-                                state=state_name,
-                                defaults={'winning_number': winning_number}
-                            )
-                            
-                            status = winning_number or 'WAITING'
-                            if created:
-                                added += 1
-                                print(f"✓ Added: {state_name} - {status}")
-                            else:
-                                updated += 1
-                                print(f"↻ Updated: {state_name} - {status}")
+        # Find results in the page
+        for key, state_name in STATE_MAPPING.items():
+            # Look for pattern: STATE_NAME followed by number
+            pattern = rf'{key}\s*[\n\r\s]*(\d{{2}})'
+            match = re.search(pattern, html_text, re.IGNORECASE)
+            
+            if match:
+                winning_number = match.group(1)
+                
+                result, created = LotteryResult.objects.update_or_create(
+                    date=today,
+                    state=state_name,
+                    defaults={'winning_number': winning_number}
+                )
+                
+                if created:
+                    added += 1
+                    print(f"✓ Added: {state_name} - {winning_number}")
+                else:
+                    updated += 1
+                    print(f"↻ Updated: {state_name} - {winning_number}")
+            else:
+                # Add with waiting status if not found
+                result, created = LotteryResult.objects.update_or_create(
+                    date=today,
+                    state=state_name,
+                    defaults={'winning_number': ''}
+                )
+                if created:
+                    added += 1
+                    print(f"✓ Added: {state_name} - WAITING")
         
         # Add manual states with WAITING status
         print("\nAdding manual states...")
@@ -83,8 +91,7 @@ def fetch_results():
                 added += 1
                 print(f"✓ Added: {state_name} - WAITING")
             else:
-                updated += 1
-                print(f"↻ Updated: {state_name} - WAITING")
+                print(f"↻ Exists: {state_name}")
         
         print(f"\n{'='*50}")
         print(f"✅ Complete! Added: {added}, Updated: {updated}")
