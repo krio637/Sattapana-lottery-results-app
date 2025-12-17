@@ -1,0 +1,1020 @@
+{% load lottery_extras %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sattapana - {% if view_chart %}{{ month_name }} {{ year }}{% else %}Today's Results{% endif %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&family=Crimson+Text:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Crimson Text', serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            color: #000;
+            overflow-x: hidden;
+            line-height: 1.4;
+        }
+        
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; position: relative; z-index: 1; }
+        
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 30px 20px;
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            border: none;
+            margin-bottom: 20px;
+            position: relative;
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            border-radius: 0;
+        }
+
+        .header h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(1.8rem, 5vw, 2.8rem);
+            font-weight: 700;
+            margin-bottom: 12px;
+            position: relative;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header .subtitle {
+            font-family: 'Crimson Text', serif;
+            font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+            font-weight: 600;
+            color: #ecf0f1;
+            margin-bottom: 12px;
+            letter-spacing: 1px;
+        }
+        
+        .header-info {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+        
+        .current-time {
+            font-family: 'Crimson Text', serif;
+            font-size: 1rem;
+            color: #ecf0f1;
+            background: rgba(255,255,255,0.1);
+            padding: 8px 16px;
+            border-radius: 25px;
+            border: 1px solid rgba(255,255,255,0.2);
+            font-weight: 600;
+        }
+        
+
+        
+        /* Live Badge */
+        .live-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            padding: 10px 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: white;
+            text-transform: uppercase;
+            border-radius: 25px;
+            box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
+            letter-spacing: 1px;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+        
+        .refresh-timer {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255,255,255,0.15);
+            color: #fff;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.3);
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        
+        .live-dot {
+            width: 10px;
+            height: 10px;
+            background: #fff;
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.6;
+                transform: scale(1.2);
+            }
+        }
+        
+        /* Filters */
+        .filters {
+            background: #f5f5f5;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 3px solid #000;
+        }
+        .filters form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            align-items: flex-end;
+        }
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-width: 140px;
+        }
+        .filter-group label {
+            font-family: 'Playfair Display', serif;
+            font-size: 0.8rem;
+            color: #000;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .filters select, .filters input[type="date"] {
+            font-family: 'Crimson Text', serif;
+            padding: 8px 12px;
+            border: 2px solid #000;
+            background: #fff;
+            color: #000;
+            font-size: 0.9rem;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .filters select:hover, .filters input[type="date"]:hover {
+            background: #f0f0f0;
+        }
+        .filters select:focus, .filters input[type="date"]:focus {
+            outline: none;
+            background: #f0f0f0;
+        }
+        .filters button {
+            font-family: 'Playfair Display', serif;
+            padding: 8px 20px;
+            background: #000;
+            color: #fff;
+            border: 2px solid #000;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .filters button:hover {
+            background: #fff;
+            color: #000;
+        }
+        
+
+        
+        /* Date Section */
+        .date-section {
+            background: #fff;
+            margin-bottom: 15px;
+            overflow: hidden;
+            border: 1px solid #dee2e6;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        
+        .date-header {
+            background: #495057;
+            padding: 12px 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            color: white;
+            text-align: center;
+            justify-content: center;
+        }
+        .date-box {
+            background: #fff;
+            color: #000;
+            padding: 8px 12px;
+            text-align: center;
+            min-width: 60px;
+            border: 1px solid #333;
+        }
+        .date-box .day {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            line-height: 1;
+            color: #000;
+        }
+        .date-box .month {
+            font-family: 'Crimson Text', serif;
+            font-size: 0.65rem;
+            color: #666;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-top: 2px;
+            letter-spacing: 0.5px;
+        }
+        .date-info .full-date {
+            font-family: 'Playfair Display', serif;
+            font-size: 1rem;
+            font-weight: 600;
+            text-transform: capitalize;
+            letter-spacing: 0.5px;
+        }
+        .date-info .day-name {
+            font-family: 'Crimson Text', serif;
+            font-size: 0.85rem;
+            font-weight: 500;
+            text-transform: capitalize;
+        }
+        
+        /* Games Grid */
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 12px;
+            padding: 15px;
+            background: #f8f9fa;
+        }
+        
+        .game-card {
+            background: #ffffff;
+            border: 1px solid #dee2e6;
+            padding: 15px 8px;
+            text-align: center;
+            transition: all 0.2s;
+            position: relative;
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .game-card:hover {
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+            transform: translateY(-1px);
+        }
+        
+        .game-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-align: center;
+            color: #495057;
+        }
+        
+        .winning-number {
+            font-family: 'Playfair Display', serif;
+            background: #495057;
+            color: #fff;
+            padding: 15px 8px;
+            font-size: 1.6rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            border: 1px solid #495057;
+            text-align: center;
+        }
+
+        
+        .waiting {
+            font-family: 'Playfair Display', serif;
+            font-size: 1rem;
+            letter-spacing: 2px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #fff;
+            font-style: italic;
+        }
+
+        
+        /* Ads Section */
+        .ads-section {
+            background: #f5f5f5;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 3px solid #000;
+        }
+        .ads-title {
+            font-family: 'Playfair Display', serif;
+            text-align: center;
+            font-size: 1.2rem;
+            color: #000;
+            margin-bottom: 15px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .ads-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        .ad-card {
+            background: #fff;
+            border: 2px solid #000;
+            padding: 15px;
+            text-align: center;
+        }
+        .ad-card:hover {
+            background: #f0f0f0;
+        }
+        .ad-card img {
+            max-width: 100%;
+            height: auto;
+            margin-bottom: 10px;
+            border: 1px solid #000;
+        }
+        .ad-title { 
+            font-family: 'Playfair Display', serif;
+            color: #000; 
+            font-weight: 700; 
+            margin-bottom: 8px; 
+            font-size: 1rem; 
+            text-transform: uppercase; 
+            letter-spacing: 1px;
+        }
+        .ad-text { 
+            font-family: 'Crimson Text', serif;
+            color: #000; 
+            font-size: 0.9rem; 
+            line-height: 1.4; 
+            white-space: pre-line; 
+            font-weight: 600;
+        }
+        
+        /* Results Table */
+        .results-table-section {
+            background: #fff;
+            margin-bottom: 20px;
+            border: 1px solid #dee2e6;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .results-table-header {
+            background: #1a1a1a;
+            color: #fff;
+            padding: 15px;
+            text-align: center;
+            border-bottom: 2px solid #000;
+        }
+
+        .results-table-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .results-table-container {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: 'Crimson Text', serif;
+        }
+
+        .results-table thead {
+            background: #495057;
+            color: #fff;
+        }
+
+        .results-table th {
+            font-family: 'Playfair Display', serif;
+            padding: 12px 8px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border: 1px solid #343a40;
+            white-space: nowrap;
+        }
+
+        .results-table td {
+            padding: 12px 8px;
+            text-align: center;
+            border: 1px solid #dee2e6;
+            font-weight: 600;
+        }
+
+        .results-table tbody tr {
+            background: #fff;
+            transition: all 0.2s;
+        }
+
+        .results-table tbody tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .results-table tbody tr:hover {
+            background: #e9ecef;
+            transform: scale(1.01);
+        }
+
+        .table-state-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #2c3e50;
+            letter-spacing: 0.5px;
+            background: #f8f9fa;
+            position: sticky;
+            left: 0;
+            z-index: 5;
+        }
+
+        .table-result {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #2c3e50;
+            letter-spacing: 1px;
+        }
+
+        .table-result.waiting {
+            color: #dc3545;
+            font-style: italic;
+            font-size: 1rem;
+        }
+        
+        /* Quick Navigation */
+        .quick-nav {
+            background: #fff;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .quick-nav-buttons {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .quick-nav-btn {
+            font-family: 'Crimson Text', serif;
+            padding: 5px 10px;
+            background: #f8f9fa;
+            color: #495057;
+            text-decoration: none;
+            font-size: 0.75rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            border: 1px solid #dee2e6;
+            text-transform: capitalize;
+            letter-spacing: 0.5px;
+        }
+        .quick-nav-btn:hover {
+            background: #495057;
+            color: #fff;
+        }
+
+        /* Disclaimer */
+        .disclaimer {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 12px;
+            margin-bottom: 15px;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .disclaimer h3 {
+            font-family: 'Playfair Display', serif;
+            color: #856404;
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .disclaimer p {
+            font-family: 'Crimson Text', serif;
+            color: #856404;
+            font-size: 0.85rem;
+            line-height: 1.4;
+            font-weight: 500;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 20px;
+        }
+        .footer-btn {
+            font-family: 'Crimson Text', serif;
+            display: inline-block;
+            padding: 10px 20px;
+            background: #495057;
+            color: #fff;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            border: 1px solid #495057;
+            text-transform: capitalize;
+            letter-spacing: 0.5px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .footer-btn:hover {
+            background: #343a40;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+        
+        .no-results {
+            font-family: 'Playfair Display', serif;
+            text-align: center;
+            padding: 40px 20px;
+            color: #000;
+            font-size: 1.2rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-style: italic;
+        }
+        
+
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container { padding: 15px; }
+            .header { 
+                padding: 25px 15px; 
+            }
+            
+            .header h1 {
+                font-size: 1.8rem;
+                letter-spacing: 2px;
+                margin-bottom: 10px;
+            }
+            
+            .header .subtitle {
+                font-size: 0.95rem;
+                margin-bottom: 10px;
+            }
+            
+            .header-info {
+                gap: 12px;
+                margin-top: 12px;
+            }
+            
+            .current-time {
+                font-size: 0.9rem;
+                padding: 6px 12px;
+            }
+            
+            .live-badge {
+                padding: 8px 16px;
+                font-size: 0.75rem;
+            }
+            
+            .refresh-timer {
+                padding: 6px 10px;
+                font-size: 0.75rem;
+            }
+            
+            .games-grid { 
+                grid-template-columns: 1fr; 
+                gap: 12px; 
+                padding: 15px; 
+                max-width: 500px;
+                margin: 0 auto;
+            }
+            .game-card { 
+                padding: 20px 15px;
+                display: flex;
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+                min-height: auto;
+                gap: 15px;
+            }
+            .game-name {
+                text-align: left;
+                font-size: 1rem;
+                flex: 1;
+                margin-bottom: 0;
+            }
+            .winning-number { 
+                font-size: 1.6rem; 
+                padding: 12px 20px;
+                margin-top: 0;
+                text-align: center;
+                flex-shrink: 0;
+                min-width: 80px;
+            }
+            .date-header { padding: 15px; justify-content: center; text-align: center; }
+            .filter-group { min-width: 100%; }
+            
+            .results-table-title {
+                font-size: 1rem;
+                letter-spacing: 1px;
+            }
+            
+            .results-table {
+                font-size: 0.75rem;
+                min-width: 700px;
+            }
+            
+            .results-table th {
+                padding: 8px 4px;
+                font-size: 0.65rem;
+                letter-spacing: 0;
+            }
+            
+            .results-table td {
+                padding: 10px 4px;
+            }
+            
+            .table-state-name {
+                font-size: 0.75rem;
+                min-width: 60px;
+            }
+            
+            .table-result {
+                font-size: 1rem;
+            }
+            
+            .table-result.waiting {
+                font-size: 0.85rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .header {
+                padding: 20px 12px;
+            }
+            
+            .header h1 {
+                font-size: 1.5rem;
+                letter-spacing: 1.5px;
+            }
+            
+            .header .subtitle {
+                font-size: 0.85rem;
+            }
+            
+            .header-info {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .current-time {
+                font-size: 0.85rem;
+                padding: 6px 12px;
+            }
+            
+            .live-badge {
+                padding: 8px 14px;
+                font-size: 0.7rem;
+            }
+            
+            .refresh-timer {
+                padding: 6px 10px;
+                font-size: 0.7rem;
+            }
+            
+            .games-grid { 
+                grid-template-columns: 1fr;
+                gap: 10px;
+                max-width: 100%;
+            }
+            .game-card {
+                padding: 18px 12px;
+                gap: 12px;
+            }
+            .game-name {
+                font-size: 0.9rem;
+            }
+            .winning-number {
+                font-size: 1.4rem;
+                padding: 10px 16px;
+                min-width: 70px;
+            }
+            .date-box .day { font-size: 2rem; }
+            
+            .results-table-title {
+                font-size: 0.9rem;
+            }
+            
+            .results-table {
+                font-size: 0.7rem;
+                min-width: 600px;
+            }
+            
+            .results-table th {
+                padding: 6px 3px;
+                font-size: 0.6rem;
+            }
+            
+            .results-table td {
+                padding: 8px 3px;
+            }
+            
+            .table-state-name {
+                font-size: 0.7rem;
+                min-width: 50px;
+            }
+            
+            .table-result {
+                font-size: 0.9rem;
+            }
+            
+            .table-result.waiting {
+                font-size: 0.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎰 SATTAPANA</h1>
+            <div class="subtitle">
+                {% if view_chart %}{{ month_name }} {{ year }} Chart{% else %}Today's Results - {{ current_date|date:"d F Y" }}{% endif %}
+            </div>
+            {% if not view_chart %}
+            <div class="header-info">
+                <div class="current-time" id="currentTime">
+                    🕐 Loading time...
+                </div>
+                <div class="live-badge">
+                    <span class="live-dot"></span>
+                    LIVE RESULTS
+                </div>
+                <div class="refresh-timer">
+                    🔄 Next update: <span id="countdown">60</span>s
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Disclaimer Section -->
+        <div class="disclaimer" id="disclaimer">
+            <h3>⚠️ DISCLAIMER</h3>
+            <p>यह वेबसाइट केवल जानकारी और पत्रकारिता के उद्देश्य से बनाई गई एक स्वतंत्र मीडिया पोर्टल है। यह किसी भी लेन-देन सेवा के रूप में नहीं है और न ही किसी संस्था से कोई औपचारिक संबंध रखती है। उपयोगकर्ता अपने क्षेत्राधिकार में लागू सभी कानूनों का पालन करने के लिए स्वयं जिम्मेदार हैं।</p>
+        </div>
+
+        {% if view_chart %}
+        <div class="filters">
+            <form method="get">
+                <input type="hidden" name="view_chart" value="true">
+                <div class="filter-group">
+                    <label>📅 Date</label>
+                    <input type="date" name="date" value="{{ date_filter }}">
+                </div>
+                <div class="filter-group">
+                    <label>📆 Month</label>
+                    <select name="month">
+                        {% for m in "123456789" %}
+                        <option value="{{ forloop.counter }}" {% if forloop.counter == month %}selected{% endif %}>
+                            {% if forloop.counter == 1 %}January{% elif forloop.counter == 2 %}February{% elif forloop.counter == 3 %}March{% elif forloop.counter == 4 %}April{% elif forloop.counter == 5 %}May{% elif forloop.counter == 6 %}June{% elif forloop.counter == 7 %}July{% elif forloop.counter == 8 %}August{% elif forloop.counter == 9 %}September{% endif %}
+                        </option>
+                        {% endfor %}
+                        <option value="10" {% if month == 10 %}selected{% endif %}>October</option>
+                        <option value="11" {% if month == 11 %}selected{% endif %}>November</option>
+                        <option value="12" {% if month == 12 %}selected{% endif %}>December</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>📅 Year</label>
+                    <select name="year">
+                        <option value="2024" {% if year == 2024 %}selected{% endif %}>2024</option>
+                        <option value="2025" {% if year == 2025 %}selected{% endif %}>2025</option>
+                        <option value="2026" {% if year == 2026 %}selected{% endif %}>2026</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>🎮 State</label>
+                    <select name="state">
+                        <option value="">All States</option>
+                        {% for state in all_states %}
+                        <option value="{{ state }}" {% if state_filter == state %}selected{% endif %}>{{ state }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit">🔍 Apply Filter</button>
+            </form>
+        </div>
+        {% endif %}
+
+        {% if results_by_date %}
+            {% for date, games in results_by_date %}
+            <div class="date-section" style="animation-delay: {{ forloop.counter0 }}00ms;">
+                <div class="date-header">
+                    <div class="date-info">
+                        <div class="full-date">{{ date|date:"d F Y" }}</div>
+                        <div class="day-name">{{ date|date:"l" }}</div>
+                    </div>
+                </div>
+                <div class="games-grid">
+                    {% for game in games %}
+                    <div class="game-card">
+                        <div class="game-name">{{ game.state }}</div>
+                        <div class="winning-number">
+                            {% if game.winning_number %}{{ game.winning_number }}{% else %}<span class="waiting">WAIT</span>{% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="no-results">
+                <p>😔 {% if view_chart %}No results for {{ month_name }} {{ year }}{% else %}No results for today{% endif %}</p>
+            </div>
+        {% endif %}
+
+        {% if advertisements %}
+        <div class="ads-section">
+            <div class="ads-title">📢 Advertisements</div>
+            <div class="ads-grid">
+                {% for ad in advertisements %}
+                <div class="ad-card">
+                    {% if ad.image %}<img src="{{ ad.image.url }}" alt="{{ ad.title }}">{% endif %}
+                    <div class="ad-title">{{ ad.title }}</div>
+                    <div class="ad-text">{{ ad.text }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if not view_chart %}
+        <!-- Monthly Results Table -->
+        <div class="results-table-section">
+            <div class="results-table-header">
+                <div class="results-table-title">📊 {{ month_name }} {{ year }} - Complete Results</div>
+            </div>
+            <div class="results-table-container">
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            {% for state in main_states %}
+                                <th>{{ state }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in month_table_rows %}
+                            <tr {% if row.is_today %}style="background: #fff3cd !important;"{% endif %}>
+                                <td class="table-state-name" {% if row.is_today %}style="background: #ffc107; color: #000;"{% endif %}>
+                                    {{ row.date|date:"d M" }}
+                                    {% if row.is_today %}<br><small>(Today)</small>{% endif %}
+                                </td>
+                                {% for state in main_states %}
+                                    {% with result=row.results|lookup:state %}
+                                        <td>
+                                            {% if result and result != 'WAIT' %}
+                                                <span class="table-result">{{ result }}</span>
+                                            {% else %}
+                                                <span class="table-result waiting">WAIT</span>
+                                            {% endif %}
+                                        </td>
+                                    {% endwith %}
+                                {% endfor %}
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="{{ main_states|length|add:1 }}" style="text-align: center; padding: 40px; color: #6c757d;">
+                                    No results available for {{ month_name }} {{ year }}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Record Chart Footer -->
+        <div style="background: #495057; color: white; text-align: center; padding: 12px; margin: 15px 0; border: 1px solid #495057; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <div style="font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">
+                Lottery Results Record
+            </div>
+        </div>
+
+        <!-- Quick Navigation -->
+        <div class="quick-nav">
+            <div class="quick-nav-buttons">
+                <a href="/" class="quick-nav-btn">🏠 Home</a>
+                <a href="?view_chart=true" class="quick-nav-btn">📊 Full Chart</a>
+                <a href="{% url 'lottery:monthly_table' %}" class="quick-nav-btn">📅 Monthly Table</a>
+                <a href="#disclaimer" class="quick-nav-btn">⚠️ Disclaimer</a>
+                <a href="javascript:location.reload()" class="quick-nav-btn">🔄 Refresh</a>
+            </div>
+        </div>
+
+        <div class="footer">
+            {% if view_chart %}
+                <a href="/" class="footer-btn">← Today's Results</a>
+            {% else %}
+                <a href="?view_chart=true" class="footer-btn">📊 View Full Chart</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        // Reorder game cards - results first, WAIT last
+        function reorderGameCards() {
+            const dateSections = document.querySelectorAll('.date-section');
+            
+            dateSections.forEach(section => {
+                const gamesGrid = section.querySelector('.games-grid');
+                if (!gamesGrid) return;
+                
+                const cards = Array.from(gamesGrid.querySelectorAll('.game-card'));
+                
+                // Sort cards: results first (no WAIT), then WAIT cards
+                cards.sort((a, b) => {
+                    const aHasWait = a.querySelector('.waiting') !== null;
+                    const bHasWait = b.querySelector('.waiting') !== null;
+                    
+                    // If a has result and b has WAIT, a comes first
+                    if (!aHasWait && bHasWait) return -1;
+                    // If a has WAIT and b has result, b comes first
+                    if (aHasWait && !bHasWait) return 1;
+                    // Otherwise maintain original order
+                    return 0;
+                });
+                
+                // Clear and re-append in new order
+                gamesGrid.innerHTML = '';
+                cards.forEach(card => gamesGrid.appendChild(card));
+            });
+        }
+        
+        // Run reordering on page load
+        document.addEventListener('DOMContentLoaded', reorderGameCards);
+        
+        // Auto refresh every 60 seconds for live results
+        {% if not view_chart %}
+        let countdown = 60;
+        const countdownElement = document.getElementById('countdown');
+        const timeElement = document.getElementById('currentTime');
+        
+        // Update current time
+        function updateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('en-IN', {
+                hour12: true,
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            if (timeElement) {
+                timeElement.textContent = `🕐 Current Time: ${timeString}`;
+            }
+        }
+        
+        // Update time immediately and then every second
+        updateTime();
+        
+        const timer = setInterval(function() {
+            countdown--;
+            updateTime();
+            
+            if (countdownElement) {
+                countdownElement.textContent = countdown;
+            }
+            
+            if (countdown <= 0) {
+                location.reload();
+            }
+        }, 1000);
+        {% endif %}
+    </script>
+</body>
+</html>

@@ -1,0 +1,811 @@
+{% load lottery_extras %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ month_name }} {{ year }} - Monthly Results | SATTAPANA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Crimson+Text:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Crimson Text', serif;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            color: #2c3e50;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+
+        .site-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+
+        .month-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            color: #34495e;
+            margin-bottom: 15px;
+        }
+
+        .navigation {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .nav-btn {
+            padding: 12px 24px;
+            background: #34495e;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-family: 'Crimson Text', serif;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .nav-btn:hover {
+            background: #2c3e50;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            position: relative;
+        }
+
+        .table-scroll-hint {
+            display: none;
+            text-align: center;
+            color: #6c757d;
+            font-size: 0.8rem;
+            margin-bottom: 10px;
+            font-style: italic;
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: 'Crimson Text', serif;
+            font-size: 0.95rem;
+            min-width: 800px;
+        }
+
+        .results-table th {
+            background: #34495e;
+            color: white;
+            padding: 15px 8px;
+            text-align: center;
+            font-family: 'Playfair Display', serif;
+            font-weight: 600;
+            font-size: 0.9rem;
+            border: 1px solid #2c3e50;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            white-space: nowrap;
+        }
+
+        .results-table td {
+            padding: 12px 8px;
+            text-align: center;
+            border: 1px solid #dee2e6;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .date-cell {
+            background: #f8f9fa;
+            font-weight: 700;
+            color: #2c3e50;
+            font-family: 'Playfair Display', serif;
+            min-width: 80px;
+            position: sticky;
+            left: 0;
+            z-index: 5;
+        }
+
+        .number-cell {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+
+        .wait-cell {
+            color: #e74c3c;
+            font-weight: 700;
+            font-style: italic;
+        }
+
+        .today-row {
+            background: #fff3cd;
+        }
+
+        .today-row .date-cell {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        /* Mobile Card Layout */
+        .mobile-view {
+            display: none;
+        }
+
+        .mobile-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-left: 4px solid #34495e;
+        }
+
+        .mobile-card.today {
+            border-left-color: #ffc107;
+            background: #fff3cd;
+        }
+
+        .mobile-date {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            text-align: center;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .mobile-results {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .mobile-result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+
+        .mobile-state-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .mobile-result-number {
+            font-family: 'Crimson Text', serif;
+            font-size: 1rem;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+
+        .mobile-result-wait {
+            font-family: 'Crimson Text', serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #e74c3c;
+            font-style: italic;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .stat-number {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: #34495e;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .disclaimer {
+            background: #ffc107;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .disclaimer-title {
+            color: #dc3545;
+            font-family: 'Playfair Display', serif;
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .disclaimer-text {
+            color: white;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                padding: 15px;
+            }
+
+            .header {
+                padding: 25px 20px;
+            }
+
+            .table-container {
+                padding: 20px;
+            }
+
+            .results-table {
+                font-size: 0.9rem;
+            }
+
+            .results-table th,
+            .results-table td {
+                padding: 10px 6px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .header {
+                padding: 20px 15px;
+                margin-bottom: 20px;
+            }
+
+            .site-title {
+                font-size: 1.8rem;
+                letter-spacing: 1px;
+            }
+
+            .month-title {
+                font-size: 1.3rem;
+            }
+
+            .navigation {
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+            }
+
+            .nav-btn {
+                width: 100%;
+                max-width: 250px;
+                padding: 12px 20px;
+                font-size: 0.95rem;
+            }
+
+            .table-container {
+                padding: 15px;
+                border-radius: 12px;
+            }
+
+            .table-scroll-hint {
+                display: block;
+            }
+
+            .results-table {
+                font-size: 0.75rem;
+                min-width: 700px;
+            }
+
+            .results-table th {
+                padding: 8px 4px;
+                font-size: 0.7rem;
+            }
+
+            .results-table td {
+                padding: 8px 4px;
+            }
+
+            .date-cell {
+                min-width: 60px;
+                font-size: 0.8rem;
+            }
+
+            .number-cell {
+                font-size: 0.9rem;
+            }
+
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+                margin-top: 20px;
+            }
+
+            .stat-card {
+                padding: 15px;
+            }
+
+            .stat-number {
+                font-size: 1.5rem;
+            }
+
+            .stat-label {
+                font-size: 0.8rem;
+            }
+
+            .disclaimer {
+                padding: 15px;
+                margin-top: 20px;
+            }
+
+            .disclaimer-title {
+                font-size: 1rem;
+            }
+
+            .disclaimer-text {
+                font-size: 0.85rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 8px;
+            }
+
+            .header {
+                padding: 15px 10px;
+                margin-bottom: 15px;
+            }
+
+            .site-title {
+                font-size: 1.5rem;
+            }
+
+            .month-title {
+                font-size: 1.1rem;
+            }
+
+            .nav-btn {
+                padding: 10px 15px;
+                font-size: 0.9rem;
+            }
+
+            .table-container {
+                padding: 10px;
+            }
+
+            .results-table {
+                font-size: 0.7rem;
+                min-width: 600px;
+            }
+
+            .results-table th {
+                padding: 6px 3px;
+                font-size: 0.65rem;
+            }
+
+            .results-table td {
+                padding: 6px 3px;
+            }
+
+            .date-cell {
+                min-width: 50px;
+                font-size: 0.7rem;
+            }
+
+            .number-cell {
+                font-size: 0.8rem;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .stat-card {
+                padding: 12px;
+            }
+
+            .stat-number {
+                font-size: 1.3rem;
+            }
+
+            .disclaimer {
+                padding: 12px;
+            }
+
+            .disclaimer-title {
+                font-size: 0.9rem;
+            }
+
+            .disclaimer-text {
+                font-size: 0.8rem;
+            }
+        }
+
+        /* Alternative Mobile Card View */
+        @media (max-width: 600px) {
+            .desktop-view {
+                display: none;
+            }
+
+            .mobile-view {
+                display: block;
+            }
+
+            .table-container {
+                padding: 0;
+                background: transparent;
+                box-shadow: none;
+            }
+        }
+
+        /* Print Styles */
+        @media print {
+            body {
+                background: white !important;
+                color: black !important;
+            }
+            
+            .container {
+                max-width: none !important;
+                padding: 0 !important;
+            }
+            
+            .header {
+                background: white !important;
+                box-shadow: none !important;
+                border-bottom: 2px solid #000 !important;
+                page-break-after: avoid;
+            }
+            
+            .navigation {
+                display: none !important;
+            }
+            
+            .table-container {
+                background: white !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+            }
+            
+            .table-scroll-hint {
+                display: none !important;
+            }
+            
+            .results-table {
+                min-width: auto !important;
+                font-size: 0.8rem !important;
+            }
+            
+            .results-table th {
+                background: #f0f0f0 !important;
+                color: black !important;
+                border: 1px solid #000 !important;
+            }
+            
+            .results-table td {
+                border: 1px solid #000 !important;
+            }
+            
+            .mobile-view {
+                display: none !important;
+            }
+            
+            .desktop-view {
+                display: block !important;
+            }
+            
+            .stats {
+                page-break-before: avoid;
+                display: none !important;
+            }
+            
+            .disclaimer {
+                page-break-before: avoid;
+                background: #f0f0f0 !important;
+                border: 1px solid #000 !important;
+            }
+            
+            .disclaimer-title {
+                color: black !important;
+            }
+            
+            .disclaimer-text {
+                color: black !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="site-title">🎰 SATTAPANA</h1>
+            <h2 class="month-title">{{ month_name }} {{ year }} - Monthly Results</h2>
+            
+            <div class="navigation">
+                <a href="{% url 'lottery:results' %}" class="nav-btn">🏠 Today's Results</a>
+                <button onclick="window.print()" class="nav-btn">🖨️ Print Table</button>
+                <button onclick="location.reload()" class="nav-btn">🔄 Refresh</button>
+            </div>
+        </div>
+
+        <!-- Desktop Table View -->
+        <div class="table-container desktop-view">
+            <div class="table-scroll-hint">👈 Swipe left/right to see all states 👉</div>
+            <table class="results-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        {% for state in states %}
+                            <th>{{ state }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in table_rows %}
+                        <tr {% if row.is_today %}class="today-row"{% endif %}>
+                            <td class="date-cell">
+                                {{ row.date|date:"d M" }}
+                                {% if row.is_today %}
+                                    <br><small>(Today)</small>
+                                {% endif %}
+                            </td>
+                            {% for state in states %}
+                                {% with result=row.results|lookup:state %}
+                                    <td class="{% if result and result != 'WAIT' %}number-cell{% else %}wait-cell{% endif %}">
+                                        {{ result|default:"WAIT" }}
+                                    </td>
+                                {% endwith %}
+                            {% endfor %}
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="{{ states|length|add:1 }}" style="text-align: center; padding: 40px; color: #6c757d;">
+                                No results available for {{ month_name }} {{ year }}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Mobile Card View -->
+        <div class="mobile-view">
+            {% for row in table_rows %}
+                <div class="mobile-card {% if row.is_today %}today{% endif %}">
+                    <div class="mobile-date">
+                        {{ row.date|date:"d F Y" }}
+                        {% if row.is_today %} (Today){% endif %}
+                    </div>
+                    <div class="mobile-results">
+                        {% for state in states %}
+                            {% with result=row.results|lookup:state %}
+                                <div class="mobile-result-item">
+                                    <span class="mobile-state-name">{{ state }}</span>
+                                    {% if result and result != 'WAIT' %}
+                                        <span class="mobile-result-number">{{ result }}</span>
+                                    {% else %}
+                                        <span class="mobile-result-wait">WAIT</span>
+                                    {% endif %}
+                                </div>
+                            {% endwith %}
+                        {% endfor %}
+                    </div>
+                </div>
+            {% empty %}
+                <div class="mobile-card">
+                    <div style="text-align: center; padding: 20px; color: #6c757d;">
+                        No results available for {{ month_name }} {{ year }}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number">{{ total_days }}</div>
+                <div class="stat-label">Days with Results</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ total_states }}</div>
+                <div class="stat-label">Lottery States</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ month_name }}</div>
+                <div class="stat-label">Current Month</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ current_date|date:"d" }}</div>
+                <div class="stat-label">Today's Date</div>
+            </div>
+        </div>
+
+        <div class="disclaimer">
+            <div class="disclaimer-title">⚠️ DISCLAIMER</div>
+            <div class="disclaimer-text">
+                यह वेबसाइट केवल जानकारी और पत्रकारिता के उद्देश्य से बनाई गई एक स्वतंत्र मीडिया पोर्टल है। यह किसी भी लेन-देन सेवा के रूप में नहीं है और न ही किसी संस्था से कोई औपचारिक संबंध रखती है। उपयोगकर्ता अपने क्षेत्राधिकार में लागू सभी कानूनों का पालन करने के लिए स्वयं जिम्मेदार हैं।
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Enhanced mobile interactions
+        document.addEventListener('DOMContentLoaded', function() {
+            const tableContainer = document.querySelector('.table-container');
+            const isMobile = window.innerWidth <= 768;
+            
+            // Add touch scroll indicators for mobile
+            if (isMobile && tableContainer) {
+                let isScrolling = false;
+                
+                tableContainer.addEventListener('scroll', function() {
+                    if (!isScrolling) {
+                        isScrolling = true;
+                        tableContainer.style.boxShadow = '0 8px 25px rgba(0,0,0,0.2)';
+                        
+                        setTimeout(function() {
+                            isScrolling = false;
+                            tableContainer.style.boxShadow = '0 8px 25px rgba(0,0,0,0.1)';
+                        }, 150);
+                    }
+                });
+            }
+            
+            // Auto-refresh functionality
+            let refreshInterval;
+            
+            function startAutoRefresh() {
+                refreshInterval = setInterval(function() {
+                    // Only refresh if page is visible
+                    if (!document.hidden) {
+                        location.reload();
+                    }
+                }, 300000); // 5 minutes
+            }
+            
+            // Start auto-refresh
+            startAutoRefresh();
+            
+            // Pause auto-refresh when page is hidden
+            document.addEventListener('visibilitychange', function() {
+                if (document.hidden) {
+                    clearInterval(refreshInterval);
+                } else {
+                    startAutoRefresh();
+                }
+            });
+            
+            // Add pull-to-refresh for mobile
+            if (isMobile) {
+                let startY = 0;
+                let currentY = 0;
+                let pullDistance = 0;
+                const pullThreshold = 100;
+                
+                document.addEventListener('touchstart', function(e) {
+                    if (window.scrollY === 0) {
+                        startY = e.touches[0].clientY;
+                    }
+                });
+                
+                document.addEventListener('touchmove', function(e) {
+                    if (window.scrollY === 0 && startY) {
+                        currentY = e.touches[0].clientY;
+                        pullDistance = currentY - startY;
+                        
+                        if (pullDistance > 0 && pullDistance < pullThreshold * 2) {
+                            e.preventDefault();
+                            document.body.style.transform = `translateY(${pullDistance * 0.5}px)`;
+                            document.body.style.opacity = 1 - (pullDistance / (pullThreshold * 3));
+                        }
+                    }
+                });
+                
+                document.addEventListener('touchend', function(e) {
+                    if (pullDistance > pullThreshold) {
+                        location.reload();
+                    } else {
+                        document.body.style.transform = '';
+                        document.body.style.opacity = '';
+                    }
+                    startY = 0;
+                    pullDistance = 0;
+                });
+            }
+            
+            // Keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                // R key for refresh
+                if (e.key === 'r' || e.key === 'R') {
+                    if (!e.ctrlKey && !e.metaKey) {
+                        e.preventDefault();
+                        location.reload();
+                    }
+                }
+                
+                // H key for home
+                if (e.key === 'h' || e.key === 'H') {
+                    if (!e.ctrlKey && !e.metaKey) {
+                        e.preventDefault();
+                        window.location.href = '{% url "lottery:results" %}';
+                    }
+                }
+            });
+        });
+        
+        // Print optimization
+        window.addEventListener('beforeprint', function() {
+            // Hide mobile view for printing
+            const mobileView = document.querySelector('.mobile-view');
+            const desktopView = document.querySelector('.desktop-view');
+            
+            if (mobileView) mobileView.style.display = 'none';
+            if (desktopView) desktopView.style.display = 'block';
+        });
+        
+        window.addEventListener('afterprint', function() {
+            // Restore original view
+            const mobileView = document.querySelector('.mobile-view');
+            const desktopView = document.querySelector('.desktop-view');
+            
+            if (window.innerWidth <= 600) {
+                if (mobileView) mobileView.style.display = 'block';
+                if (desktopView) desktopView.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

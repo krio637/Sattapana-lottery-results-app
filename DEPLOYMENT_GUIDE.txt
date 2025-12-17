@@ -1,0 +1,173 @@
+================================================================================
+COMPLETE HOSTINGER DEPLOYMENT GUIDE
+================================================================================
+
+STEP 1: FILES UPLOAD
+================================================================================
+
+FileZilla ya cPanel File Manager se upload karein:
+
+Upload karne ke files:
+✓ Sattapana/ (folder)
+✓ lottery/ (folder)
+✓ manage.py
+✓ requirements.txt
+✓ auto_update_results.py
+✓ db.sqlite3 (optional - agar existing data chahiye)
+
+================================================================================
+STEP 2: SSH LOGIN & SETUP
+================================================================================
+
+1. Hostinger cPanel se SSH access enable karein
+2. Terminal/PuTTY se login karein
+3. Project folder mein jaayein:
+   cd public_html
+
+4. Virtual environment banayein (recommended):
+   python3 -m venv venv
+   source venv/bin/activate
+
+5. Dependencies install karein:
+   pip3 install -r requirements.txt
+
+================================================================================
+STEP 3: SETTINGS.PY UPDATE
+================================================================================
+
+Sattapana/settings.py mein changes:
+
+# Production settings
+DEBUG = False
+ALLOWED_HOSTS = ['yourdomain.com', 'www.yourdomain.com', 'your-ip']
+
+# Static files
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# Media files
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Security (add these)
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
+SECURE_SSL_REDIRECT = True
+
+================================================================================
+STEP 4: DATABASE & ADMIN SETUP
+================================================================================
+
+1. Migrations run karein:
+   python3 manage.py makemigrations
+   python3 manage.py migrate
+
+2. Static files collect karein:
+   python3 manage.py collectstatic
+
+3. Admin user banayein:
+   python3 manage.py createsuperuser
+
+4. Test karein:
+   python3 manage.py runserver 0.0.0.0:8000
+
+================================================================================
+STEP 5: CRON JOB SETUP (AUTOMATIC UPDATES)
+================================================================================
+
+Hostinger cPanel mein:
+
+1. Advanced → Cron Jobs
+2. Add New Cron Job:
+
+   Minute: 0
+   Hour: 0 (midnight)
+   Day: *
+   Month: *
+   Weekday: *
+   
+   Command:
+   cd /home/u123456789/public_html && /usr/local/bin/python3 auto_update_results.py
+   
+   (Replace u123456789 with your actual username)
+
+3. Save
+
+Ab har raat 12 baje automatically update hoga!
+
+================================================================================
+STEP 6: WSGI CONFIGURATION
+================================================================================
+
+Hostinger pe Django run karne ke liye:
+
+1. .htaccess file banayein:
+
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ /passenger_wsgi.py/$1 [QSA,L]
+
+2. passenger_wsgi.py file banayein:
+
+import sys
+import os
+
+INTERP = "/home/u123456789/public_html/venv/bin/python3"
+if sys.executable != INTERP:
+    os.execl(INTERP, INTERP, *sys.argv)
+
+sys.path.insert(0, os.getcwd())
+os.environ['DJANGO_SETTINGS_MODULE'] = 'Sattapana.settings'
+
+from django.core.wsgi import get_wsgi_application
+application = get_wsgi_application()
+
+================================================================================
+STEP 7: TESTING
+================================================================================
+
+1. Website kholen: https://yourdomain.com
+2. Admin panel: https://yourdomain.com/admin-panel/
+3. Manual update test: python3 auto_update_results.py
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+Problem: Cron job nahi chal raha
+Solution: 
+- Python path check karein: which python3
+- Permissions check karein: chmod +x auto_update_results.py
+- Cron logs check karein
+
+Problem: Static files nahi dikh rahe
+Solution:
+- python3 manage.py collectstatic run karein
+- .htaccess mein static alias add karein
+
+Problem: Database error
+Solution:
+- Permissions check karein: chmod 664 db.sqlite3
+- Folder permissions: chmod 755 .
+
+================================================================================
+ALTERNATIVE: MANUAL DAILY UPDATE
+================================================================================
+
+Agar cron job setup nahi ho raha:
+
+1. Har din admin panel kholen
+2. Script manually run karein SSH se
+3. Ya external cron service use karein (cron-job.org)
+
+================================================================================
+SUPPORT
+================================================================================
+
+Hostinger support se help lein agar:
+- Python version issues
+- Cron job setup problems
+- WSGI configuration issues
+
+================================================================================

@@ -1,0 +1,98 @@
+================================================================================
+HOSTINGER PE AUTOMATIC DAILY UPDATE SETUP
+================================================================================
+
+OPTION 1: CRON JOB (AUTOMATIC - RECOMMENDED)
+================================================================================
+
+Hostinger cPanel mein cron job setup karein:
+
+1. Hostinger cPanel login karein
+2. "Advanced" section mein "Cron Jobs" dhundein
+3. New Cron Job add karein:
+
+   Common Settings: Once Per Day (0 0 * * *)
+   
+   Command:
+   cd /home/username/public_html && /usr/bin/python3 auto_update_results.py
+   
+   (Replace 'username' with your actual username)
+
+4. Save karein
+
+Ab har din automatically 12:00 AM pe results update honge!
+
+================================================================================
+OPTION 2: MANUAL UPDATE (Simple but Manual)
+================================================================================
+
+Agar cron job nahi chahiye, to:
+
+1. Har din manually admin panel kholen
+2. "Add New Result" se results add karein
+3. Ya SSH se login karke command run karein:
+   python3 auto_update_results.py
+
+================================================================================
+DEPLOYMENT CHECKLIST FOR HOSTINGER
+================================================================================
+
+1. FILES UPLOAD:
+   ✓ All Python files (.py)
+   ✓ Templates folder
+   ✓ Static files
+   ✓ requirements.txt
+   ✓ manage.py
+   ✓ Database (db.sqlite3) - Optional, fresh start ke liye
+
+2. INSTALL DEPENDENCIES:
+   SSH mein:
+   pip3 install -r requirements.txt
+   pip3 install requests beautifulsoup4
+
+3. SETTINGS.PY UPDATE:
+   - DEBUG = False
+   - ALLOWED_HOSTS = ['yourdomain.com', 'www.yourdomain.com']
+   - STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+   - MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+4. RUN MIGRATIONS:
+   python3 manage.py migrate
+   python3 manage.py collectstatic
+
+5. CREATE SUPERUSER:
+   python3 manage.py createsuperuser
+
+6. SETUP CRON JOB (for automatic updates)
+
+================================================================================
+CRON JOB TIMING OPTIONS
+================================================================================
+
+Har din 12:00 AM:     0 0 * * *
+Har din 6:00 AM:      0 6 * * *
+Har din 12:00 PM:     0 12 * * *
+Har din 11:00 PM:     0 23 * * *
+Har 6 ghante:         0 */6 * * *
+Har 12 ghante:        0 */12 * * *
+
+================================================================================
+IMPORTANT NOTES
+================================================================================
+
+1. Hostinger pe Python version check karein (python3 --version)
+2. Virtual environment use karein agar available ho
+3. Cron job logs check karein agar error aaye
+4. First time manually test karein: python3 auto_update_results.py
+
+================================================================================
+ALTERNATIVE: WEBHOOK SETUP
+================================================================================
+
+Agar cron job nahi mil raha, to external service use karein:
+
+1. cron-job.org pe free account banayein
+2. URL setup karein jo script trigger kare
+3. Daily schedule set karein
+
+================================================================================

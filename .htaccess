@@ -1,0 +1,7 @@
+PassengerAppRoot /home/u123456789/domains/yourdomain.com/public_html
+PassengerAppType wsgi
+PassengerStartupFile passenger_wsgi.py
+
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^(.*)$ passenger_wsgi.py/$1 [QSA,L]

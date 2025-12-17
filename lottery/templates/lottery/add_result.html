@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add New Result - Sattapana Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            max-width: 600px;
+            width: 100%;
+        }
+        .form-card {
+            background: #ffffff;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            border: 2px solid #dee2e6;
+        }
+        .form-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .form-header h1 {
+            color: #6c757d;
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        .form-header p {
+            color: #495057;
+            font-size: 1.1em;
+        }
+        .form-group {
+            margin-bottom: 25px;
+        }
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: #6c757d;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        .form-control {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 1em;
+            background: #f8f9fa;
+            color: #333;
+            transition: all 0.3s;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: #6c757d;
+            box-shadow: 0 0 10px rgba(108, 117, 125, 0.3);
+        }
+        .form-control::placeholder {
+            color: #6c757d;
+        }
+        .quick-games {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        .game-chip {
+            padding: 8px 15px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s;
+        }
+        .game-chip:hover {
+            background: #495057;
+            transform: scale(1.05);
+        }
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 40px;
+        }
+        .btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
+            display: inline-block;
+            transition: all 0.3s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+            color: white;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(108, 117, 125, 0.5);
+        }
+        .btn-secondary {
+            background: #adb5bd;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #868e96;
+        }
+        .helper-text {
+            color: #6c757d;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="form-card">
+            <div class="form-header">
+                <h1>➕ Add New Result</h1>
+                <p>Enter the lottery result details</p>
+            </div>
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="{{ form.date.id_for_label }}">📅 Date:</label>
+                    {{ form.date }}
+                    <div class="helper-text">Select the result date</div>
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.state.id_for_label }}">📍 State:</label>
+                    {{ form.state }}
+                    <div class="helper-text">Enter the state name</div>
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.winning_number.id_for_label }}">🎯 Winning Number:</label>
+                    {{ form.winning_number }}
+                    <div class="helper-text">Enter the winning number (max 10 digits)</div>
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.result_time.id_for_label }}">🕐 Result Time:</label>
+                    {{ form.result_time }}
+                    <div class="helper-text">Enter the result announcement time (e.g., 05:00 AM)</div>
+                </div>
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary">💾 Save Result</button>
+                    <a href="{% url 'lottery:admin_dashboard' %}" class="btn btn-secondary">❌ Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Set today's date as default
+        window.onload = function() {
+            const dateInput = document.getElementById('{{ form.date.id_for_label }}');
+            if (!dateInput.value) {
+                const today = new Date().toISOString().split('T')[0];
+                dateInput.value = today;
+            }
+        }
+    </script>
+</body>
+</html>

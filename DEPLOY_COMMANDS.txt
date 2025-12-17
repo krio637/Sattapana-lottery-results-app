@@ -1,0 +1,169 @@
+================================================================================
+HOSTINGER DEPLOYMENT COMMANDS
+================================================================================
+
+SERVER: 72.61.238.249
+USER: root
+
+================================================================================
+STEP 1: CONNECT TO SERVER
+================================================================================
+
+ssh root@72.61.238.249
+
+(Enter password when prompted)
+
+================================================================================
+STEP 2: NAVIGATE TO PROJECT
+================================================================================
+
+cd ~/public_html
+# OR if domain-specific:
+# cd ~/domains/yourdomain.com/public_html
+
+================================================================================
+STEP 3: BACKUP CURRENT DATABASE (IMPORTANT!)
+================================================================================
+
+cp db.sqlite3 db.sqlite3.backup.$(date +%Y%m%d_%H%M%S)
+
+================================================================================
+STEP 4: UPDATE FILES
+================================================================================
+
+Option A - If using Git:
+git pull origin main
+
+Option B - Manual upload via FTP/cPanel:
+- Upload changed files via FileZilla or cPanel File Manager
+- Make sure to upload: fetch_results.py, lottery/, Sattapana/, etc.
+
+================================================================================
+STEP 5: ACTIVATE VIRTUAL ENVIRONMENT
+================================================================================
+
+source venv/bin/activate
+
+================================================================================
+STEP 6: UPDATE DEPENDENCIES
+================================================================================
+
+pip install --upgrade -r requirements.txt
+
+# Or install individually:
+pip install --upgrade django requests beautifulsoup4 pillow
+
+================================================================================
+STEP 7: RUN MIGRATIONS
+================================================================================
+
+python manage.py migrate
+
+================================================================================
+STEP 8: COLLECT STATIC FILES
+================================================================================
+
+python manage.py collectstatic --noinput
+
+================================================================================
+STEP 9: SET PERMISSIONS
+================================================================================
+
+chmod 664 db.sqlite3
+chmod 755 .
+chmod -R 755 media/
+chmod -R 755 lottery/
+
+================================================================================
+STEP 10: TEST THE APPLICATION
+================================================================================
+
+# Test fetch script
+python fetch_results.py
+
+# Check if it works
+python manage.py check
+
+================================================================================
+STEP 11: RESTART APPLICATION
+================================================================================
+
+# For Passenger (Hostinger uses this):
+touch tmp/restart.txt
+
+# OR create restart file:
+mkdir -p tmp
+touch tmp/restart.txt
+
+# OR restart via cPanel:
+# Go to cPanel → Advanced → Python → Restart Application
+
+================================================================================
+STEP 12: VERIFY CRON JOB
+================================================================================
+
+# Check existing cron jobs:
+crontab -l
+
+# If not set, add cron job:
+crontab -e
+
+# Add this line (adjust path):
+0 * * * * cd ~/public_html && ~/public_html/venv/bin/python fetch_results.py
+
+# Save and exit (Ctrl+X, then Y, then Enter)
+
+================================================================================
+QUICK UPDATE COMMAND (ONE-LINER)
+================================================================================
+
+cd ~/public_html && source venv/bin/activate && pip install --upgrade -r requirements.txt && python manage.py migrate && python manage.py collectstatic --noinput && chmod 664 db.sqlite3 && touch tmp/restart.txt && echo "Deployment Complete!"
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+If website shows error:
+1. Check error logs:
+   tail -f ~/logs/error.log
+   # OR
+   tail -f ~/public_html/error.log
+
+2. Check Python version:
+   python --version
+   python3 --version
+
+3. Check virtual environment:
+   which python
+   pip list
+
+4. Test Django:
+   python manage.py check
+   python manage.py runserver 0.0.0.0:8000
+
+5. Check permissions:
+   ls -la db.sqlite3
+   ls -la media/
+
+================================================================================
+IMPORTANT FILES TO UPDATE
+================================================================================
+
+✓ fetch_results.py - Main fetch script
+✓ lottery/models.py - Database models
+✓ lottery/views.py - View logic
+✓ lottery/templates/ - HTML templates
+✓ Sattapana/settings.py - Django settings
+✓ requirements.txt - Dependencies
+
+================================================================================
+POST-DEPLOYMENT VERIFICATION
+================================================================================
+
+1. Visit website: http://yourdomain.com
+2. Check admin panel: http://yourdomain.com/admin-panel/
+3. Verify results are showing
+4. Test fetch script manually
+5. Check cron job logs
+
+================================================================================
